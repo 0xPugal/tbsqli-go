@@ -22,6 +22,7 @@ const (
 var (
 	verbose    bool
 	outputFile string
+	payloadsFile string 
 )
 
 func readLines(filename string) ([]string, error) {
@@ -75,17 +76,15 @@ func isWithinResponseTimeRange(responseTime, maxResponseTime float64) bool {
 }
 
 func main() {
-	fmt.Println("Time Based SQLI Scanner") // Print statement added
-
 	inputFile := flag.String("i", "", "Text file with the URLs to which the GET request will be made.")
-	payloadsFile := flag.String("p", "", "Text file with the payloads that will be appended to the URLs.")
+	flag.StringVar(&payloadsFile, "p", "", "Text file with the payloads that will be appended to the URLs.")
 	cookie := flag.String("C", "", "Cookie to include in the GET request.")
 	responseTimeFlag := flag.Float64("r", 22.0, "Maximum response time considered vulnerable.")
 	flag.BoolVar(&verbose, "v", false, "Show detailed information during execution.")
 	flag.StringVar(&outputFile, "o", "", "File to save the output.")
 	flag.Parse()
 
-	if *inputFile == "" || *payloadsFile == "" {
+	if *inputFile == "" || payloadsFile == "" {
 		flag.Usage()
 		log.Fatal("You must provide files for input URLs and payloads.")
 	}
@@ -95,16 +94,16 @@ func main() {
 		log.Fatalf("Error reading the input URLs file: %s", err)
 	}
 
-	payloads, err := readLines(*payloadsFile)
+	payloads, err := readLines(payloadsFile) 
 	if err != nil {
 		log.Fatalf("Error reading the payloads file: %s", err)
 	}
 
 	var wg sync.WaitGroup
-	ch := make(chan string, len(urls)*len(payloads)) // Buffered channel
+	ch := make(chan string, len(urls)*len(payloads)) 
 
 	// Concurrency control
-	sem := make(chan struct{}, 10) // Limit concurrency to 10
+	sem := make(chan struct{}, 10) 
 
 	var output *os.File
 	if outputFile != "" {
@@ -132,6 +131,7 @@ func main() {
 		close(ch)
 	}()
 
+	fmt.Println("Time Based SQLI Scanner")
 	for result := range ch {
 		log.Println(result)
 	}
